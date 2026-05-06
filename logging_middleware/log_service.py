@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 import httpx
+import os
 
 class Log(BaseModel):
     stack: str
@@ -38,9 +39,18 @@ class Log(BaseModel):
 
         url = "http://20.207.122.201/evaluation-service/logs"
         payload = self.logdata()
+        token = os.getenv("LOG_BEARER_TOKEN")
+
+        if not token:
+            raise ValueError("missing LOG_BEARER_TOKEN in environment")
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
 
         with httpx.Client() as client:
-            response = client.post(url, json=payload)
+            response = client.post(url, json=payload, headers=headers)
             response.raise_for_status()
 
         return response.json()
